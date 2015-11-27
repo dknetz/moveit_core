@@ -8,6 +8,7 @@ target_link_libraries(${MOVEIT_LIB_NAME}
   moveit_exceptions
   moveit_transforms
   moveit_collision_detection_fcl
+  moveit_collision_detection_gpu_voxels
   moveit_kinematic_constraints 
   moveit_robot_trajectory
   moveit_trajectory_processing

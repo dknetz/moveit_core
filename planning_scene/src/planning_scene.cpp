@@ -37,6 +37,7 @@
 #include <boost/algorithm/string.hpp>
 #include <moveit/planning_scene/planning_scene.h>
 #include <moveit/collision_detection_fcl/collision_detector_allocator_fcl.h>
+#include <moveit/collision_detection_gpu_voxels/collision_detector_allocator_gpu_voxels.h>
 #include <geometric_shapes/shape_operations.h>
 #include <moveit/collision_detection/collision_tools.h>
 #include <moveit/trajectory_processing/trajectory_tools.h>
@@ -44,6 +45,7 @@
 #include <moveit/exceptions/exceptions.h>
 #include <octomap_msgs/conversions.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <ros/ros.h>
 #include <set>
 
 namespace planning_scene
@@ -173,7 +175,28 @@ void planning_scene::PlanningScene::initialize()
   for (std::vector<srdf::Model::DisabledCollision>::const_iterator it = dc.begin(); it != dc.end(); ++it)
     acm_->setEntry(it->link1_, it->link2_, true);
 
-  setActiveCollisionDetector(collision_detection::CollisionDetectorAllocatorFCL::create());
+  ros::NodeHandle n("move_group");
+  std::string collision_method;
+  if (!n.getParam("collision_detection_method", collision_method))
+  {
+	  logWarn("The parameter 'collision_detection_method' is unknown. Assuming 'fcl'...");
+  }
+  else
+  {
+	  if (collision_method == "gpu-voxels")
+	  {
+		  setActiveCollisionDetector(collision_detection::CollisionDetectorAllocatorGPUVoxels::create());
+		  logInform("Using gpu-voxels collision detection!");
+	  }
+	  else
+	  {
+		  if (collision_method != "fcl")
+		  {
+			  logWarn("The parameter 'collision_detection_method' has an unknown value. Assuming 'fcl'...");
+		  }
+		  setActiveCollisionDetector(collision_detection::CollisionDetectorAllocatorFCL::create());
+	  }
+  }
 }
 
 /* return NULL on failure */
